@@ -103,4 +103,11 @@ model.optimize()
 
 fin = time()
 
-print((fin - ini)/60)
+print("---------------------------------------------------------------------------")
+
+for i in model.getVars():
+    print(f"{i.varName}, {i.x}")
+
+print("---------------------------------------------------------------------------")
+
+print(f"Tiempo total de ejecución: {(fin - ini)/60} minutos")
