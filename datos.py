@@ -39,3 +39,11 @@ for vj in vjs:
         viajes[int(v[0])] = {int(v[1]):int(v[2])}
     else:
         viajes[int(v[0])][int(v[1])] = int(v[2])
+
+# Función auxiliar, retorna el viaje más corto hacia un laboratorio l (y por ende el más conveniente)
+def shortest_trip(l):
+    shortest = -1
+    for i in viajes:
+        if shortest <= viajes[i][l]:
+            shortest = viajes[i][l]
+    return shortest

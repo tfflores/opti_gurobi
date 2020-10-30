@@ -1,7 +1,9 @@
 from gurobipy import *
-from datos import drones, laboratorios,  centros_de_testeo, viajes
+from datos import drones, laboratorios,  centros_de_testeo, viajes, shortest_trip
 import parametros as p
 from time import time 
+
+
 
 ini = time()
 
@@ -34,14 +36,6 @@ model.update()
 obj = quicksum(drones[i]["CU"]*x[i,k,l,t] + drones[i]["CC"]*a[i,k,t] for i in I_ for k in K_ for l in L_ for t in T_) 
 
 
-def shortest_trip(l):
-    shortest = -1
-    for i in viajes:
-        if shortest <= viajes[i][l]:
-            shortest = viajes[i][l]
-    return shortest
-
-
 ### Restricciones
 # 1 Un dron no puede realizar más de una entrega al mismo tiempo
 model.addConstrs((quicksum(x[i, k, l, t] for l in L_ for k in K_) <= 1 for i in I_ for t in T_), name="Entregas")
@@ -64,9 +58,9 @@ model.addConstrs((y[i1, l, t] + y[i2, l, t] <= 1 for t in T_ for l in L_ for i1 
 # Construcción de variable b_i_t:
 
 model.addConstrs((
-    (drones[i]["D"] - y[i, l, t] * quicksum(x[i, k, l, tj] for tj in range(t, t + viajes[k][l]))) 
+    (drones[i]["D"] - quicksum(x[i, k, l, tj] for tj in range(t, t + viajes[k][l]))) 
 
-- (drones[i]["D"] - y[i, l, t] * quicksum(x[i, k, l, tj] for tj in range(t, t + viajes[k][l])) + 2 * z[i, k, t + viajes[k][l]] * quicksum(a[i, k, tc] for tc in range(t + viajes[k][l], t + viajes[k][l] + drones[i]["g"]))) 
+- (drones[i]["D"] - quicksum(x[i, k, l, tj] for tj in range(t, t + viajes[k][l])) + 2 * z[i, k, t + viajes[k][l]] * quicksum(a[i, k, tc] for tc in range(t + viajes[k][l], t + viajes[k][l] + drones[i]["g"]))) 
 
 +
  drones[i]["D"] * (1 - x[i, k, l, t] - a[i, k, t]) == b[i, t] for i in I_ for k in K_ for l in L_ for t in T_ if  t + viajes[k][l] + drones[i]["g"] <= 20), name = "R7")
@@ -80,7 +74,7 @@ model.addConstrs((quicksum(a[i, k, t] for t in T_) >= drones[i]["g"] for i in I_
 model.addConstrs((drones[i]["D"] - b[i,t] >= a[i, k, t] for i in I_ for k in K_ for t in T_), name = "R9")
 
 # 10. Construcción de la variable z:
-model.addConstrs((y[i, l, t] + x[i, k, l, t])/2 >= z[i, k, t+viajes[k][l]] for i in I_ for k in K_ for l in L_ for t in T_ if t + viajes[k][l]  < p.PERIODOS), name = "R10")
+model.addConstrs(((y[i, l, t] + x[i, k, l, t])/2 >= z[i, k, t+viajes[k][l]] for i in I_ for k in K_ for l in L_ for t in T_ if t + viajes[k][l]  < p.PERIODOS), name = "R10")
 
 # 11. Construcción de la variable y:
 
