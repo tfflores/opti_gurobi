@@ -1,9 +1,7 @@
 from gurobipy import *
-from datos import drones, laboratorios,  centros_de_testeo, viajes, shortest_trip
+from datos import drones, laboratorios,  centros_de_testeo, viajes
 import parametros as p
 from time import time 
-
-
 
 ini = time()
 
@@ -13,7 +11,7 @@ I_ = range(p.DRONES)
 K_ = range(p.CENTROS_TESTEO)
 L_ = range(p.LABORATORIOS)
 T_ = range(p.PERIODOS)
-
+D = p.DEMANDA
 
 model = Model("Optimizadrón Entrega 2")
 
@@ -22,17 +20,22 @@ x = model.addVars(I_, K_, L_, T_, vtype=GRB.BINARY, name="x")
 
 a = model.addVars(I_, K_, T_, vtype=GRB.BINARY, name="a")
 
-d = model.addVars(L_, T_, vtype=GRB.INTEGER, name="d")
+d = model.addVars(K_, T_, vtype=GRB.INTEGER, name="d")
 
-y = model.addVars(I_, L_, T_, vtype=GRB.BINARY, name="y")
+y = model.addVars(I_, K_, T_, vtype=GRB.BINARY, name="y")
 
-b = model.addVars(I_, T_, vtype=GRB.INTEGER, name="b")
-
-z = model.addVars(I_, K_, T_, vtype=GRB.BINARY, name="z")
 
 model.update()
 
 obj = quicksum(drones[i]["CU"]*x[i,k,l,t] + drones[i]["CC"]*a[i,k,t] for i in I_ for k in K_ for l in L_ for t in T_) 
+
+
+def shortest_trip(k):
+    shortest = -1
+    for i in viajes[k]:
+        if shortest >= viajes[k][i] or shortest ==-1:
+            shortest = viajes[k][i]
+    return shortest
 
 
 ### Restricciones
@@ -42,64 +45,50 @@ model.addConstrs((quicksum(x[i, k, l, t] for l in L_ for k in K_) <= 1 for i in 
 # 2 Un dron no puede hacer una entrega cuya duración sea mayor al tiempo que dura su batería 
 model.addConstrs((x[i, k, l, t]*viajes[k][l] <= drones[i]["D"] for i in I_ for k in K_ for l in L_ for t in T_), name="R2")
 
-# 4 Un dron no puede realizar una entrega mientras se está cargando
+# 3 Un dron no puede realizar una entrega mientras se está cargando
 
-model.addConstrs((x[i, k, l, t] + a[i, k, t] <= 1 for i in I_ for k in K_ for l in L_ for t in T_ ), name="R4")
+model.addConstrs((x[i, k, l, t] + a[i, k, t] <= 1 for i in I_ for k in K_ for l in L_ for t in T_ ), name="R3")
 
-# 5 Ninguna entrega debe quedar incompleta. Si se inicia una entrega, esta debe ser terminada
+# 4 Ninguna entrega debe quedar incompleta. Si se inicia una entrega, esta debe ser terminada
 
-model.addConstrs((quicksum(x[i,k,l,tj] for k in K_ for l in L_ for t in T_ for tj in range(t, t+viajes[k][l]) if t+viajes[k][l] < p.PERIODOS) >= viajes[kj][lj]*y[i, lj, t] for i in I_ for kj in K_ for lj in L_ for t in T_), name="R5")
+model.addConstrs((x.sum(i, '*', '*', '*') >= viajes[k][l] for i in I_ for k in K_ for l in L_), name="R4")
+model.addConstrs((x[i, k, l, t2] - x[i, k, l, t1] <= y[i, k, t2]) for i in I_ for t1, t2 in zip(T_, T_[1:]) for k in K_ for l in L_)
 
-#6 Dos drones distintos no pueden iniciar una entrega hacia el mismo laboratorioen el mismo periodo t:
+# 5 Dos drones distintos no pueden iniciar una entrega hacia el mismo laboratorioen el mismo periodo t:
 
-model.addConstrs((y[i1, l, t] + y[i2, l, t] <= 1 for t in T_ for l in L_ for i1 in I_ for i2 in I_ if i1 != i2), name = "R6")
+model.addConstrs((y[i1, k, t] + y[i2, k, t] <= 1 for t in T_ for k in K_ for i1 in I_ for i2 in I_ if i1 != i2), name = "R5")
+ 
+# 6 El dron se debe cargar segun las horas que usa:
 
-# Construcción de variable b_i_t:
+model.addConstrs((quicksum(a[i, k, t] for t in T_) >= quicksum(x[i, k, l, t] for t in T_)/2 for i in I_ for k in K_ for l in L_ ), name="R6")
 
-model.addConstrs((
-    (drones[i]["D"] - quicksum(x[i, k, l, tj] for tj in range(t, t + viajes[k][l]))) 
+# 7 Si el dron está cargado completamente, este debe dejar de cargarse.
 
-- (drones[i]["D"] - quicksum(x[i, k, l, tj] for tj in range(t, t + viajes[k][l])) + 2 * z[i, k, t + viajes[k][l]] * quicksum(a[i, k, tc] for tc in range(t + viajes[k][l], t + viajes[k][l] + drones[i]["g"]))) 
+model.addConstrs((quicksum(a[i, k, t] for t in T_) <= quicksum(y[i,k,t] for t in T_)*drones[i]["g"] for i in I_ for k in K_), name = "R7")
 
-+
- drones[i]["D"] * (1 - x[i, k, l, t] - a[i, k, t]) == b[i, t] for i in I_ for k in K_ for l in L_ for t in T_ if  t + viajes[k][l] + drones[i]["g"] <= 20), name = "R7")
 
-# 8 El dron debe cargarse por completo:
+# 8. Construcción de la variable y:
 
-model.addConstrs((quicksum(a[i, k, t] for t in T_) >= drones[i]["g"] for i in I_ for k in K_), name="R8")
+model.addConstrs((quicksum(y[i, k, tj] for t in T_ for k in K_ for tj in range(t*(shortest_trip(k)+drones[i]["g"]), (t+1)*(shortest_trip(k)+drones[i]["g"])) if (t+1)*(shortest_trip(k)+drones[i]["g"]) <= p.PERIODOS-(t+1)*(shortest_trip(k)+drones[i]["g"])) == 1 for i in I_), name="R8") # R11 nueva
 
-# 9 Si el dron está cargado completamente, este debe dejar de cargarse.
+# 9. Construcción de la variable d_l_t:
 
-model.addConstrs((drones[i]["D"] - b[i,t] >= a[i, k, t] for i in I_ for k in K_ for t in T_), name = "R9")
+model.addConstrs((quicksum(y[i, k, r] for i in I_ for r in range(t)) == d[k, t] for t in T_ for k in K_), name="R9")
 
-# 10. Construcción de la variable z:
-model.addConstrs(((y[i, l, t] + x[i, k, l, t])/2 >= z[i, k, t+viajes[k][l]] for i in I_ for k in K_ for l in L_ for t in T_ if t + viajes[k][l]  < p.PERIODOS), name = "R10")
+# 10. Se debe respetar el maximo de entregas que puede recibir un laboratorio
+model.addConstrs((d[k, t] <= laboratorios[l]["E"] for k in K_ for t in T_ for l in L_), name = "R10")
 
-# 11. Construcción de la variable y:
-
-model.addConstrs((quicksum(y[i, l, tj] for t in T_ for l in L_ for tj in range(t*(shortest_trip(l)+drones[i]["g"]), (t+1)*(shortest_trip(l)+drones[i]["g"])) if (t+1)*(shortest_trip(l)+drones[i]["g"]) <= p.PERIODOS-(t+1)*(shortest_trip(l)+drones[i]["g"])) == 1 for i in I_), name="R11") # R11 nueva
-
-# 12. Construcción de la variable d_l_t:
-
-model.addConstrs((quicksum(y[i, l, r] for i in I_ for r in range(t)) == d[l, t] for t in T_ for l in L_), name="R12")
-
-# 13. Se debe respetar el maximo de entregas que puede recibir un laboratorio
-model.addConstrs((d[l, t] <= laboratorios[l]["E"] for l in L_ for t in T_), name = "R13")
-
-# 14. El total de entregas realizadas tiene que satisfacer la demanda 
+# 11. El total de entregas realizadas tiene que satisfacer la demanda 
 t_final = T_[-1]
-model.addConstr((quicksum(d[l, t_final] for l in L_) >= p.DEMANDA), name="R14")
+model.addConstr((quicksum(d[k, t_final] for k in K_) >= D), name="R11")
 
-# 15 Naturaleza de las variables:
-model.addConstrs((d[l, t] >= 0 for l in L_ for t in T_), name="R15a")
-model.addConstrs((b[i, t] >= 0 for i in I_ for t in T_), name="R15b")
+# 12 Naturaleza de las variables:
+model.addConstrs((d[k, t] >= 0 for k in K_ for t in T_), name="R12")
 
 
 model.setObjective(obj, GRB.MINIMIZE)
 
 model.optimize()
-
-#model.printAttr('x')
 
 fin = time()
 
@@ -110,4 +99,6 @@ for i in model.getVars():
 
 print("---------------------------------------------------------------------------")
 
-print(f"Tiempo total de ejecución: {(fin - ini)/60} minutos")
+print(f"Tiempo total de ejecución: {(fin - ini)} segundos")
+    
+
