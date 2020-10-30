@@ -23,7 +23,7 @@ with open("viajes.csv", "w", encoding = "utf-8") as file:
 
 # ta listo ekipo
 with open("drones.csv", "w", encoding = "utf-8") as file:
-    rango_costo_electrico = [100, 150] # en clp
+    rango_costo_electrico = [20, 25] # en clp
     rango_costo_uso = [40, 70] # costo por desgaste del dron
     rango_duracion_bateria = [2, 5] # medido en periodos t
     file.write("id,costo_electrico,costo_uso,duracion_bateria,tiempo_carga\n")
@@ -41,10 +41,10 @@ with open("testeo.csv", "w", encoding = "utf-8") as file:
     file.write("numero_centro,cantidad_entregas_posibles\n")
     #https://noticias.udec.cl/centro-de-diagnostico-universitario-proyecta-hasta-150-test-diarios-de-covid-19/
     for i in range(p.CENTROS_TESTEO):
-        file.write(f"{i},{randint(rango_entregas_posibles[0], rango_entregas_posibles[1])}\n")
+        file.write(f"{i}\n")
 
 with open("laboratorios.csv", "w", encoding = "utf-8") as file:
-    rango_demanda_tests = [50, 80]
-    file.write("laboratorio,demanda\n")
+    rango_demanda_tests = [20, 30]
+    file.write("laboratorio,capacidad\n")
     for i in range(p.LABORATORIOS):
         file.write(f"{i},{randint(rango_demanda_tests[0], rango_demanda_tests[1])}\n")

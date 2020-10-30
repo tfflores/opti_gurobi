@@ -14,7 +14,6 @@ K_ = range(p.CENTROS_TESTEO)
 L_ = range(p.LABORATORIOS)
 T_ = range(p.PERIODOS)
 
-D = sum(centros_de_testeo[i]["entregas"] for i in K_)
 
 model = Model("Optimizadrón Entrega 2")
 

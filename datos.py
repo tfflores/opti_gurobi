@@ -26,7 +26,8 @@ centros_de_testeo = {}
 
 for ct in tst:
     c = ct.strip("\n").split(",")
-    centros_de_testeo[int(c[0])] = {"entregas":int(c[1])}
+    centros_de_testeo[int(c[0])] = {"id":int(c[0])}
+
 with open("viajes.csv") as file:
     file.readline()
     vjs = file.readlines()
