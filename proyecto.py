@@ -43,7 +43,7 @@ def shortest_trip(k):
 model.addConstrs((quicksum(x[i, k, l, t] for l in L_ for k in K_) <= 1 for i in I_ for t in T_), name="Entregas")
 
 # 2 Un dron no puede hacer una entrega cuya duración sea mayor al tiempo que dura su batería 
-model.addConstrs((x[i, k, l, t]*viajes[k][l] <= drones[i]["D"] for i in I_ for k in K_ for l in L_ for t in T_), name="R2")
+model.addConstrs((x[i, k, l, t]*viajes[k][l] <= min(drones[i]["D"], h) for i in I_ for k in K_ for l in L_ for t in T_), name="R2")
 
 # 3 Un dron no puede realizar una entrega mientras se está cargando
 

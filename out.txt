@@ -15,7 +15,7 @@ Coefficient statistics:
   Bounds range     [1e+00, 1e+00]
   RHS range        [1e+00, 4e+01]
 Presolve removed 76825 rows and 4246 columns
-Presolve time: 0.26s
+Presolve time: 0.27s
 Presolved: 12381 rows, 14906 columns, 77204 nonzeros
 Variable types: 0 continuous, 14906 integer (14856 binary)
 Found heuristic solution: objective 5290.0000000
@@ -38,7 +38,7 @@ Cutting planes:
   RLT: 1
   Relax-and-lift: 1
 
-Explored 1 nodes (10418 simplex iterations) in 0.74 seconds
+Explored 1 nodes (10418 simplex iterations) in 0.78 seconds
 Thread count was 12 (of 12 available processors)
 
 Solution count 2: 4291 5290 
@@ -19199,4 +19199,4 @@ y[14,5,39], -0.0
 y[14,5,40], -0.0
 y[14,5,41], -0.0
 ---------------------------------------------------------------------------
-Tiempo total de ejecución: 2.0405433177948 segundos
+Tiempo total de ejecución: 2.108227252960205 segundos
