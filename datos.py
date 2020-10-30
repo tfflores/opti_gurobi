@@ -16,7 +16,7 @@ laboratorios = {}
 
 for lb in lbs:
     l = lb.strip("\n").split(",")
-    laboratorios[int(l[0])] = {"E":int(l[1])}
+    laboratorios[int(l[0])] = {}
 
 with open("testeo.csv") as file:
     file.readline()
@@ -26,7 +26,7 @@ centros_de_testeo = {}
 
 for ct in tst:
     c = ct.strip("\n").split(",")
-    centros_de_testeo[int(c[0])] = {"id":int(c[0])}
+    centros_de_testeo[int(c[0])] = {"E":int(c[1])}
 
 with open("viajes.csv") as file:
     file.readline()

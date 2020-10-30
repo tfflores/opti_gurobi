@@ -37,14 +37,13 @@ with open("drones.csv", "w", encoding = "utf-8") as file:
 
 with open("testeo.csv", "w", encoding = "utf-8") as file:
     #numero_centro,cantidad_entregas_posibles
-    rango_entregas_posibles = [5, 10]
+    rango_entrega_tests = [20, 30]
     file.write("numero_centro,cantidad_entregas_posibles\n")
     #https://noticias.udec.cl/centro-de-diagnostico-universitario-proyecta-hasta-150-test-diarios-de-covid-19/
     for i in range(p.CENTROS_TESTEO):
-        file.write(f"{i}\n")
+        file.write(f"{i}, {randint(rango_entrega_tests[0], rango_entrega_tests[1])}\n")
 
 with open("laboratorios.csv", "w", encoding = "utf-8") as file:
-    rango_demanda_tests = [20, 30]
-    file.write("laboratorio,capacidad\n")
+    file.write("laboratorio\n")
     for i in range(p.LABORATORIOS):
-        file.write(f"{i},{randint(rango_demanda_tests[0], rango_demanda_tests[1])}\n")
+        file.write(f"{i}\n")

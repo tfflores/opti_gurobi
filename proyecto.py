@@ -27,6 +27,7 @@ y = model.addVars(I_, K_, T_, vtype=GRB.BINARY, name="y")
 
 model.update()
 
+#FUNCION OBJETIVO
 obj = quicksum(drones[i]["CU"]*x[i,k,l,t] + drones[i]["CC"]*a[i,k,t] for i in I_ for k in K_ for l in L_ for t in T_) 
 
 
@@ -76,7 +77,7 @@ model.addConstrs((quicksum(y[i, k, tj] for t in T_ for k in K_ for tj in range(t
 model.addConstrs((quicksum(y[i, k, r] for i in I_ for r in range(t)) == d[k, t] for t in T_ for k in K_), name="R9")
 
 # 10. Se debe respetar el maximo de entregas que puede recibir un laboratorio
-model.addConstrs((d[k, t] <= laboratorios[l]["E"] for k in K_ for t in T_ for l in L_), name = "R10")
+model.addConstrs((d[k, t] <= centros_de_testeo[k]["E"] for k in K_ for t in T_), name = "R10")
 
 # 11. El total de entregas realizadas tiene que satisfacer la demanda 
 t_final = T_[-1]
