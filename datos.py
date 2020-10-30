@@ -47,7 +47,7 @@ for vj in vjs:
 
 def shortest_trip(k):
     shortest = -1
-    for i in laboratorios:
+    for i in viajes[k]:
         if shortest <= viajes[k][i] or shortest == -1:
             shortest = viajes[k][i]
     return shortest

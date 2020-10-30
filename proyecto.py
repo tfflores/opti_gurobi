@@ -1,5 +1,5 @@
 from gurobipy import *
-from datos import drones, laboratorios,  centros_de_testeo, viajes
+from datos import drones, laboratorios,  centros_de_testeo, viajes, shortest_trip
 import parametros as p
 from time import time 
 
@@ -29,15 +29,6 @@ model.update()
 
 #FUNCION OBJETIVO
 obj = quicksum(drones[i]["CU"]*x[i,k,l,t] + drones[i]["CC"]*a[i,k,t] for i in I_ for k in K_ for l in L_ for t in T_) 
-
-
-def shortest_trip(k):
-    shortest = -1
-    for i in viajes[k]:
-        if shortest >= viajes[k][i] or shortest ==-1:
-            shortest = viajes[k][i]
-    return shortest
-
 
 ### Restricciones
 # 1 Un dron no puede realizar más de una entrega al mismo tiempo
